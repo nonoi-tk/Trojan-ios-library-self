@@ -1,13 +1,29 @@
 import NetworkExtension
 import ProxyConfig
-import TrojanProxy
+//import TrojanProxy
 
 class PacketTunnelProvider: NEPacketTunnelProvider {
     var proxyClient: TrojanProxy!
+
+    func getFD() -> Int32? {
+        if #available(iOS 15, *) {
+            var buf = [CChar](repeating: 0, count: Int(IFNAMSIZ))
+            let utunPrefix = "utun".utf8CString.dropLast()
+            return (0...1024).first { (_ fd: Int32) -> Bool in
+            var len = socklen_t(buf.count)
+            return getsockopt(fd, 2, 2, &buf, &len) == 0 && buf.starts(with: utunPrefix)
+        }
+        } else {
+            return self.packetFlow.value(forKeyPath: "socket.fileDescriptor") as? Int32
+        }
+    }
+
     override func startTunnel(options: [String : NSObject]?, completionHandler: @escaping (Error?) -> Void) {
+        NSLog("startTunnel")
         let tunnelNetworkSettings = createTunnelSettings()
         setTunnelNetworkSettings(tunnelNetworkSettings) { [weak self] error in
-            let tunFd = self?.packetFlow.value(forKeyPath: "socket.fileDescriptor") as! Int32
+            let tunFd : Int32 = (self?.getFD()!)!;
+
             switch ProxyConfig.preferHandler {
             case .Socks5:
                 let host = ProxyConfig.getStringConfig(name: ProxyConfig.ConfigKey.Host.rawValue)!
@@ -15,8 +31,8 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
                 let password = ProxyConfig.getStringConfig(name: ProxyConfig.ConfigKey.Password.rawValue)!
                 let proxyServer = "127.0.0.1:1080"
                 
-                proxyClient = TrojanProxy(local_host: "127.0.0.1", local_port: 1080, remote_host: host, remote_port: port, password: password)
-                proxyClient.start()
+                self?.proxyClient = TrojanProxy(local_host: "127.0.0.1", local_port: 1080, remote_host: host, remote_port: UInt16(port), password: password)
+                self?.proxyClient.start()
                 NSLog("proxy server \(proxyServer)")
                 DispatchQueue.global(qos: .default).async {
                     run(tunFd, "socks", proxyServer, "", "")
