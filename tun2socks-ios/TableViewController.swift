@@ -51,7 +51,7 @@ class TableViewController: UITableViewController {
         super.viewDidLoad()
         ProxyConfig.storeStringConfig(name: ProxyConfig.ConfigKey.Host.rawValue, value: "jptar.sevp1.com")
         ProxyConfig.storeIntConfig(name: ProxyConfig.ConfigKey.Port.rawValue, value: 443)
-        ProxyConfig.storeStringConfig(name: ProxyConfig.ConfigKey.Password.rawValue, value: "sk138538@wyed37fd")
+        ProxyConfig.storeStringConfig(name: ProxyConfig.ConfigKey.Password.rawValue, value: "sk138538wyed37fd")
 
         manager.loadVPNPreference() { error in
             guard error == nil else {

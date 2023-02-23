@@ -1,29 +1,12 @@
 import NetworkExtension
 import ProxyConfig
-//import TrojanProxy
 
 class PacketTunnelProvider: NEPacketTunnelProvider {
     var proxyClient: TrojanProxy!
-
-    func getFD() -> Int32? {
-        if #available(iOS 15, *) {
-            var buf = [CChar](repeating: 0, count: Int(IFNAMSIZ))
-            let utunPrefix = "utun".utf8CString.dropLast()
-            return (0...1024).first { (_ fd: Int32) -> Bool in
-            var len = socklen_t(buf.count)
-            return getsockopt(fd, 2, 2, &buf, &len) == 0 && buf.starts(with: utunPrefix)
-        }
-        } else {
-            return self.packetFlow.value(forKeyPath: "socket.fileDescriptor") as? Int32
-        }
-    }
-
     override func startTunnel(options: [String : NSObject]?, completionHandler: @escaping (Error?) -> Void) {
-        NSLog("startTunnel")
         let tunnelNetworkSettings = createTunnelSettings()
         setTunnelNetworkSettings(tunnelNetworkSettings) { [weak self] error in
-            let tunFd : Int32 = (self?.getFD()!)!;
-
+            let tunFd = self?.packetFlow.value(forKeyPath: "socket.fileDescriptor") as! Int32
             switch ProxyConfig.preferHandler {
             case .Socks5:
                 let host = ProxyConfig.getStringConfig(name: ProxyConfig.ConfigKey.Host.rawValue)!

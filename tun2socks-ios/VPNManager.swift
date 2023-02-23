@@ -58,15 +58,26 @@ public class VPNManager {
     
     public func enableVPNManager(completion: @escaping (Error?) -> Void) {
         manager.isEnabled = true
-        manager.saveToPreferences { error in
-            guard error == nil else {
-                completion(error)
-                return
-            }
-            self.manager.loadFromPreferences { error in
-                completion(error)
+        DispatchQueue.main.async {
+            self.manager.saveToPreferences { error in
+                guard error == nil else {
+                    completion(error)
+                    return
+                }
+                self.manager.loadFromPreferences { error in
+                    if let error = error {
+                        NSLog("Failed to load preferences: \(error.localizedDescription)")
+                        completion(error)
+                    } else {
+                        if(self.manager.protocolConfiguration == nil){
+                            NSLog("loadFromPreferences failed, not found protocolConfiguration")
+                            completion(error)
+                        }
+                    }
+                }
             }
         }
+        
     }
     
     public func toggleVPNConnection(completion: @escaping (Error?) -> Void) {

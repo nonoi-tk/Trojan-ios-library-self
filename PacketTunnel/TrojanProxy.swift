@@ -166,7 +166,7 @@ public class TrojanSession:NSObject, GCDAsyncSocketDelegate, GCDAsyncUdpSocketDe
     }
     
     public func socket(_ sock: GCDAsyncSocket, didConnectToHost host: String, port: UInt16) {
-        #if os(iOS)
+        #if TARGET_OS_IPHONE
         sock.perform {
             sock.enableBackgroundingOnSocket()
         }
@@ -364,9 +364,9 @@ public class TrojanProxy: NSObject, GCDAsyncSocketDelegate {
     public func start() {
         queue = DispatchQueue(label: "listen socket delegate queue")
         socket = GCDAsyncSocket.init(delegate: self, delegateQueue: queue)
-        #if os(iOS)
+        #if TARGET_OS_IPHONE
         socket.perform {
-            self.socket.enableBackgroundingOnSocket()
+            socket.enableBackgroundingOnSocket()
         }
         #endif
         do {
@@ -378,7 +378,7 @@ public class TrojanProxy: NSObject, GCDAsyncSocketDelegate {
     }
     
     public func socket(_ sock: GCDAsyncSocket, didAcceptNewSocket newSocket: GCDAsyncSocket) {
-        #if os(iOS)
+        #if TARGET_OS_IPHONE
         newSocket.perform {
             newSocket.enableBackgroundingOnSocket()
         }
